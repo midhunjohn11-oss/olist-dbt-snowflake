@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: "Fact table — one row per order with revenue and delivery metrics"
+    columns:
+      - name: ORDER_ID
+        tests:
+          - unique
+          - not_null
+      - name: CUSTOMER_ID
+        tests:
+          - not_null
+      - name: ORDER_STATUS
+        tests:
+          - not_null
+      - name: TOTAL_PAYMENT_VALUE
+        tests:
+          - not_null
+
+  - name: dim_customer
+    description: "Customer dimension — SCD Type 1"
+    columns:
+      - name: CUSTOMER_ID
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_product
+    description: "Product dimension — SCD Type 1"
+    columns:
+      - name: PRODUCT_ID
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_date
+    description: "Date dimension — static calendar 2016-2019"
+    columns:
+      - name: DATE_ID
+        tests:
+          - unique
+          - not_null

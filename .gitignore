@@ -1,0 +1,12 @@
+venv/
+dbt_venv/
+.venv/
+target/
+dbt_packages/
+logs/
+profiles.yml
+.env
+__pycache__/
+*.pyc
+olist-dbt-snowflake/
+Thumbs.db

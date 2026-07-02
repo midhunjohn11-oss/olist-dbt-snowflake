@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Cleansed and typed orders from Bronze RAW_ORDERS"
+    columns:
+      - name: ORDER_ID
+        description: "Unique order identifier"
+        tests:
+          - unique
+          - not_null
+
+      - name: CUSTOMER_ID
+        description: "FK to stg_customers"
+        tests:
+          - not_null
+
+      - name: ORDER_STATUS
+        description: "Current order status"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['DELIVERED', 'SHIPPED', 'CANCELED', 'UNAVAILABLE',
+                       'INVOICED', 'PROCESSING', 'CREATED', 'APPROVED']
+
+      - name: ORDER_PURCHASE_TIMESTAMP
+        description: "When customer placed the order"
+        tests:
+          - not_null
+
+      - name: ACTUAL_DELIVERY_DAYS
+        description: "Days from purchase to delivery"
+
+      - name: IS_LATE_DELIVERY
+        description: "True if delivered after estimated date"
+        tests:
+          - not_null
