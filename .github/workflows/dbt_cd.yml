@@ -1,0 +1,34 @@
+name: dbt CD — Deploy to VM
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Azure VM via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: azureuser
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            echo "=== Updating dbt project on VM ==="
+            cd /home/azureuser/airflow/dbt
+
+            # Pull latest changes
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "=== Restarting Airflow to pick up DAG changes ==="
+            cd /home/azureuser/airflow
+            docker compose restart airflow-scheduler
+
+            echo "=== Deployment complete ==="
+            docker compose ps
