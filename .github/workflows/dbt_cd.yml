@@ -1,9 +1,8 @@
 name: dbt CD — Deploy to VM
 
 on:
-  push:
-    workflow_dispatch:
-
+  workflow_dispatch:
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
