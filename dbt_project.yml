@@ -23,3 +23,19 @@ models:
     gold:
       +materialized: table
       +schema: GOLD
+  tpch-dbt-snowflake:
+    bronze:
+      +materialized: incremental
+      +incremental_strategy: append
+      +schema: tpch_bronze
+    silver:
+      +materialized: incremental
+      +incremental_strategy: merge
+      +schema: tpch_silver
+    gold:
+      +materialized: table   # overridden to incremental per-model where needed (see below)
+      +schema: tpch_gold
+snapshots:
+  olist_dbt_project:
+    tpch:
+      +target_schema: tpch_silver

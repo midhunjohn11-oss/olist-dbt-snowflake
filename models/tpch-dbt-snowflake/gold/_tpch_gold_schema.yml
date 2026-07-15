@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: tpch_dim_customer
+    columns:
+      - name: customer_sk
+        tests: [unique, not_null]
+      - name: customer_key
+        tests: [not_null]
+
+  - name: tpch_dim_supplier
+    columns:
+      - name: supplier_sk
+        tests: [unique, not_null]
+      - name: supplier_key
+        tests: [not_null]
+
+  - name: tpch_dim_part
+    columns:
+      - name: part_key
+        tests: [unique, not_null]
+
+  - name: tpch_fact_lineitem
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [order_key, line_number]
+    columns:
+      - name: part_key
+        tests:
+          - relationships:
+              to: ref('tpch_dim_part')
+              field: part_key
+
+  - name: tpch_fact_orders
+    columns:
+      - name: order_key
+        tests: [unique, not_null]
