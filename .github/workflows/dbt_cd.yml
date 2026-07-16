@@ -2,7 +2,7 @@ name: dbt CD — Deploy to VM
 
 on:
   workflow_dispatch:
-  
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -18,12 +18,18 @@ jobs:
           username: azureuser
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            echo "=== Updating dbt project on VM ==="
+            echo "=== Updating dbt project (and airflow_dags/) on VM ==="
             cd /home/azureuser/airflow/dbt
 
-            # Pull latest changes
+            # Pull latest changes — this now also updates airflow_dags/,
+            # which ~/airflow/dags symlinks to (one-time setup, see notes)
             git fetch origin
             git reset --hard origin/main
+
+            echo "=== Regenerating Cosmos manifest so new/changed models show up ==="
+            docker exec airflow-airflow-scheduler-1 \
+              /opt/airflow/dbt/dbt_venv_clean/bin/dbt parse \
+              --project-dir /opt/airflow/dbt --profiles-dir /opt/airflow/dbt
 
             echo "=== Restarting Airflow to pick up DAG changes ==="
             cd /home/azureuser/airflow
@@ -31,3 +37,19 @@ jobs:
 
             echo "=== Deployment complete ==="
             docker compose ps
+
+      - name: Verify DAGs import cleanly after deploy
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: azureuser
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd /home/azureuser/airflow
+            sleep 15  # give the scheduler a moment to finish restarting
+            ERRORS=$(docker compose exec -T airflow-scheduler airflow dags list-import-errors)
+            echo "$ERRORS"
+            if echo "$ERRORS" | grep -q "Broken DAG"; then
+              echo "Deployment introduced a DAG import error — failing the build."
+              exit 1
+            fi

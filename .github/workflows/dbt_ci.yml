@@ -46,6 +46,12 @@ jobs:
                 client_session_keep_alive: false
           EOF
 
+      # MISSING FROM ORIGINAL — dbt_utils/dbt_expectations/dbt_date are used
+      # by the project's macros; without this, compile/run fails on a clean
+      # CI runner that has no dbt_packages/ yet.
+      - name: dbt deps
+        run: dbt deps --project-dir . --profiles-dir ~/.dbt
+
       - name: dbt compile
         run: dbt compile --project-dir . --profiles-dir ~/.dbt
 
@@ -60,6 +66,17 @@ jobs:
 
       - name: dbt test Gold
         run: dbt test --select gold --project-dir . --profiles-dir ~/.dbt --target ci
+
+      # NEW — once airflow_dags/ is added to the repo, catches a broken DAG
+      # file (syntax errors, bad imports) before it ever reaches the VM.
+      # Cheap (no Airflow needed) and would have caught several of the
+      # import errors hit while building these DAGs.
+      - name: Check DAG files parse
+        run: |
+          python -m py_compile airflow_dags/tpch_dbt_pipeline_plain.py
+          python -m py_compile airflow_dags/tpch_dbt_pipeline_cosmos.py
+          python -m py_compile airflow_dags/utils/dbt_airflow_utils.py
+          python -m py_compile airflow_dags/utils/cosmos_logging_callbacks.py
 
       - name: Cleanup CI schema
         if: always()
